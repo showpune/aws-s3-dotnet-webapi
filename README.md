@@ -1,4 +1,4 @@
-# Working with AWS S3 using ASP.NET Core – Upload, Download & Delete Files 
+# Working with Azure Blob Storage using ASP.NET Core – Upload, Download & Delete Files 
 
 ![AWS S3 using ASP.NET Core](https://codewithmukesh.com/wp-content/uploads/2022/03/Working-with-AWS-S3-using-ASP.NET-Core.png)
 
