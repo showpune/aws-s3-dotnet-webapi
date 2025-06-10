@@ -1,0 +1,7 @@
+appcat analyze . --source folder  --code --report noactive --privacyMode Unrestricted --non-interactive
+
+appcat analyze . --source solution --report noactive --privacyMode Unrestricted --non-interactive --serializer html
+appcat analyze . --config config.json --non-interactive 
+
+
+appcat analyze . --source folder  --non-interactive --report test
