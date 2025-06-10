@@ -1,4 +1,5 @@
-using Amazon.S3;
+using Azure.Storage.Blobs;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,8 +9,12 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
-builder.Services.AddAWSService<IAmazonS3>();
+
+string endpoint = builder.Configuration.GetValue<string>("AzureStorageBlob:Endpoint");
+
+// Create BlobServiceClient using credential and endpoint
+builder.Services.AddSingleton<BlobServiceClient>(sp =>
+    new BlobServiceClient(new Uri(endpoint), new DefaultAzureCredential()));
 
 var app = builder.Build();
 
