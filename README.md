@@ -1,4 +1,66 @@
-# Working with AWS S3 using ASP.NET Core – Upload, Download & Delete Files 
+# Working with Azure Storage Account using ASP.NET Core – Upload, Download & Delete Files 
+
+![Azure Storage using ASP.NET Core](https://codewithmukesh.com/wp-content/uploads/2022/03/Working-with-AWS-S3-using-ASP.NET-Core.png)
+
+**Note: This project has been migrated from AWS S3 to Azure Storage Account (Blob Storage)**
+
+This project demonstrates how to work with Azure Blob Storage using ASP.NET Core Web API to upload, download and delete files from Azure's scalable blob storage service. The API provides endpoints for managing containers (equivalent to S3 buckets) and blobs (equivalent to S3 objects).
+
+## Migration from AWS S3 to Azure Storage Account
+
+This codebase has been migrated from AWS S3 to Azure Blob Storage with the following key changes:
+- **AWS S3 Buckets** → **Azure Blob Storage Containers**
+- **AWS S3 Objects** → **Azure Blobs**
+- **AWS S3 Presigned URLs** → **Azure SAS URLs**
+- **AWS SDK** → **Azure Storage SDK**
+
+## Topics Covered:
+
+- Azure Blob Storage – Overview
+- Azure Storage Account Configuration
+- Working with Azure Blob Storage using ASP.NET Core – Getting Started
+  - Working with Azure Containers: Creating Containers, Getting a List of Containers, Deleting a Container, Testing
+  - File Operations in Azure Blob Storage: Upload Files to Azure Blob Storage, Get All the Files, Download Files, Delete Files, Testing File Operations
+  - SAS URL Generation for secure access
+
+## Configuration
+
+Update `appsettings.json` with your Azure Storage Account endpoint:
+
+```json
+{
+  "AzureStorageBlob": {
+    "Endpoint": "https://yourstorageaccount.blob.core.windows.net"
+  }
+}
+```
+
+## Authentication
+
+The application uses `DefaultAzureCredential` which supports multiple authentication methods including:
+- Azure CLI
+- Managed Identity
+- Visual Studio
+- Environment variables
+
+## API Endpoints
+
+### Container Operations
+- `POST /api/buckets/create` - Create a new container
+- `GET /api/buckets/get-all` - List all containers
+- `DELETE /api/buckets/delete` - Delete a container
+
+### File Operations
+- `POST /api/files/upload` - Upload a file to a container
+- `GET /api/files/get-all` - List all files in a container with SAS URLs
+- `GET /api/files/get-by-key` - Download a specific file
+- `DELETE /api/files/delete` - Delete a file
+
+*Complete Source Code Included!
+
+Original AWS S3 tutorial: https://codewithmukesh.com/blog/working-with-aws-s3-using-aspnet-core/
+
+#azure #storage #blobstorage #dotnet #dotnet8 #codeblog #100daysofcode #blogger #tutorials 
 
 ![AWS S3 using ASP.NET Core](https://codewithmukesh.com/wp-content/uploads/2022/03/Working-with-AWS-S3-using-ASP.NET-Core.png)
 
