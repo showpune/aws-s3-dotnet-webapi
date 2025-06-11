@@ -1,21 +1,52 @@
-# Working with AWS S3 using ASP.NET Core – Upload, Download & Delete Files 
+# Working with Azure Storage Account (Blob Storage) using ASP.NET Core – Upload, Download & Delete Files 
 
-![AWS S3 using ASP.NET Core](https://codewithmukesh.com/wp-content/uploads/2022/03/Working-with-AWS-S3-using-ASP.NET-Core.png)
+![Azure Storage using ASP.NET Core](https://codewithmukesh.com/wp-content/uploads/2022/03/Working-with-AWS-S3-using-ASP.NET-Core.png)
 
-In this article, we will be get started on working with AWS S3 using ASP.NET Core Web API to upload, download and delete files from Amazon’s Super Scalable S3! Apart from that, we will also learn more about Amazon’s S3, the problem it solves, dive a bit into the AWS Console for S3 Management, AWS CLI, and Credentials Store, Generate Access Keys for accessing S3 via SDKs, Creating and Deleting S3 buckets, a bit about pre-signed URLs and so on!
+In this application, we demonstrate working with Azure Storage Account (Blob Storage) using ASP.NET Core Web API to upload, download and delete files from Azure's scalable blob storage! The application covers Azure Storage configuration, authentication using Azure Identity, container management (equivalent to S3 buckets), and blob operations with SAS token generation for secure access.
 
-## Topics Covered:
+## Features Covered:
 
-- AWS S3 – In Short
-- Creating User & Generating Access Keys via AWS IAM
-- Creating your First AWS S3 Bucket via AWS Console
-- AWS Configurations & CLI
-- Working with AWS S3 using ASP.NET Core – Getting Started
-  - Working with AWS S3 Bucket : Creating S3 Buckets, Getting a List of S3 Buckets, Deleting an S3 Bucket, Testing
-  - File Operations in AWS S3 : Upload Files to AWS S3, Get All the Files in an AWS S3, Download Files from AWS S3, Delete Files from AWS S3, Testing File Operations
-	   
-*Complete Source Code Included!
+- Azure Storage Account – Blob Storage Service
+- Authentication using Azure Default Credential
+- Container Management using Azure Storage Client
+- ASP.NET Core Integration with Azure Storage
+  - Container Operations: Creating Containers, Listing Containers, Deleting Containers
+  - Blob Operations: Upload Files to Azure Storage, List Files in Container, Download Files from Azure Storage, Delete Files from Azure Storage
+  - SAS Token Generation for Secure Access (equivalent to pre-signed URLs)
 
-Read the entire article - https://codewithmukesh.com/blog/working-with-aws-s3-using-aspnet-core/
+## Configuration
 
-#amazon #aws #management #testing #dotnet #dotnet6 #codeblog #100daysofcode #blogger #s3 #tutorials
+Update your `appsettings.json` with your Azure Storage Account endpoint:
+
+```json
+{
+  "AzureStorageBlob": {
+    "Endpoint": "https://yourstorageaccount.blob.core.windows.net"
+  }
+}
+```
+
+## Authentication
+
+The application uses `DefaultAzureCredential` for authentication, which supports multiple authentication methods:
+- Managed Identity (recommended for Azure-hosted applications)
+- Azure CLI authentication (for local development)
+- Environment variables
+- Interactive authentication
+
+## API Endpoints
+
+### Container Management (Buckets)
+- `POST /api/buckets/create?bucketName={name}` - Create a new container
+- `GET /api/buckets/get-all` - List all containers
+- `DELETE /api/buckets/delete?bucketName={name}` - Delete a container
+
+### File Management (Blobs)
+- `POST /api/files/upload` - Upload file to container
+- `GET /api/files/get-all?bucketName={container}&prefix={prefix}` - List files in container
+- `GET /api/files/get-by-key?bucketName={container}&key={filename}` - Download specific file
+- `DELETE /api/files/delete?bucketName={container}&key={filename}` - Delete specific file
+
+*Complete Source Code for Azure Storage Integration Included!
+
+#azure #storage #management #testing #dotnet #dotnet6 #codeblog #100daysofcode #blogger #blobstorage #tutorials
