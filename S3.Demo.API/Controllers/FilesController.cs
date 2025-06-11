@@ -48,12 +48,23 @@ public class FilesController : ControllerBase
             var blobClient = containerClient.GetBlobClient(blobItem.Name);
             
             // Generate SAS token for the blob (equivalent to presigned URL)
-            var sasUri = blobClient.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(1));
+            string? sasUri = null;
+            try
+            {
+                var sasUriResult = blobClient.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(1));
+                sasUri = sasUriResult.ToString();
+            }
+            catch (Exception)
+            {
+                // If SAS generation fails (e.g., due to credential limitations),
+                // provide the direct blob URI instead
+                sasUri = blobClient.Uri.ToString();
+            }
             
             blobs.Add(new BlobObjectDto()
             {
                 Name = blobItem.Name,
-                PresignedUrl = sasUri.ToString()
+                PresignedUrl = sasUri
             });
         }
 
