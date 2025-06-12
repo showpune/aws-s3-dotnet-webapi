@@ -1,5 +1,5 @@
-﻿using Amazon.S3;
-using Amazon.S3.Model;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Mvc;
 using S3.Demo.API.Models;
 
@@ -9,71 +9,83 @@ namespace S3.Demo.API.Controllers;
 [ApiController]
 public class FilesController : ControllerBase
 {
-    private readonly IAmazonS3 _s3Client;
-    public FilesController(IAmazonS3 s3Client)
+    private readonly BlobServiceClient _blobServiceClient;
+    public FilesController(BlobServiceClient blobServiceClient)
     {
-       _s3Client = s3Client;
+       _blobServiceClient = blobServiceClient;
     }
+    
     [HttpPost("upload")]
-    public async Task<IActionResult> UploadFileAsync(IFormFile file, string bucketName, string? prefix)
+    public async Task<IActionResult> UploadFileAsync(IFormFile file, string containerName, string? prefix)
     {
-        var bucketExists = await _s3Client.DoesS3BucketExistAsync(bucketName);
-        if (!bucketExists) return NotFound($"Bucket {bucketName} does not exist.");
-        var request = new PutObjectRequest()
-        {
-            BucketName = bucketName,
-            Key = string.IsNullOrEmpty(prefix) ? file.FileName : $"{prefix?.TrimEnd('/')}/{file.FileName}",
-            InputStream = file.OpenReadStream()
-        };
-        request.Metadata.Add("Content-Type", file.ContentType);
-        await _s3Client.PutObjectAsync(request);
-        return Ok($"File {prefix}/{file.FileName} uploaded to S3 successfully!");
+        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var exists = await containerClient.ExistsAsync();
+        if (!exists.Value) return NotFound($"Container {containerName} does not exist.");
+        
+        var blobName = string.IsNullOrEmpty(prefix) ? file.FileName : $"{prefix?.TrimEnd('/')}/{file.FileName}";
+        var blobClient = containerClient.GetBlobClient(blobName);
+        
+        using var stream = file.OpenReadStream();
+        await blobClient.UploadAsync(stream, overwrite: true);
+        
+        return Ok($"File {blobName} uploaded to Azure Storage successfully!");
     }
 
     [HttpGet("get-all")]
-    public async Task<IActionResult> GetAllFilesAsync(string bucketName, string? prefix)
+    public async Task<IActionResult> GetAllFilesAsync(string containerName, string? prefix)
     {
-        var bucketExists = await _s3Client.DoesS3BucketExistAsync(bucketName);
-        if (!bucketExists) return NotFound($"Bucket {bucketName} does not exist.");
-        var request = new ListObjectsV2Request()
+        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var exists = await containerClient.ExistsAsync();
+        if (!exists.Value) return NotFound($"Container {containerName} does not exist.");
+        
+        var blobs = new List<BlobObjectDto>();
+        await foreach (var blobItem in containerClient.GetBlobsAsync(prefix: prefix))
         {
-            BucketName = bucketName,
-            Prefix = prefix
-        };
-        var result = await _s3Client.ListObjectsV2Async(request);
-        var s3Objects = result.S3Objects.Select(s =>
-        {
-            var urlRequest = new GetPreSignedUrlRequest()
+            var blobClient = containerClient.GetBlobClient(blobItem.Name);
+            
+            // Generate SAS URI for the blob (1 minute expiry)
+            string? sasUrl = null;
+            if (blobClient.CanGenerateSasUri)
             {
-                BucketName = bucketName,
-                Key = s.Key,
-                Expires = DateTime.UtcNow.AddMinutes(1)
-            };
-            return new S3ObjectDto()
+                sasUrl = blobClient.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddMinutes(1)).ToString();
+            }
+            
+            blobs.Add(new BlobObjectDto
             {
-                Name = s.Key.ToString(),
-                PresignedUrl = _s3Client.GetPreSignedURL(urlRequest),
-            };
-        });
+                Name = blobItem.Name,
+                SasUrl = sasUrl
+            });
+        }
 
-        return Ok(s3Objects);
+        return Ok(blobs);
     }
 
     [HttpGet("get-by-key")]
-    public async Task<IActionResult> GetFileByKeyAsync(string bucketName, string key)
+    public async Task<IActionResult> GetFileByKeyAsync(string containerName, string key)
     {
-        var bucketExists = await _s3Client.DoesS3BucketExistAsync(bucketName);
-        if (!bucketExists) return NotFound($"Bucket {bucketName} does not exist.");
-        var s3Object = await _s3Client.GetObjectAsync(bucketName, key);
-        return File(s3Object.ResponseStream, s3Object.Headers.ContentType);
+        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var exists = await containerClient.ExistsAsync();
+        if (!exists.Value) return NotFound($"Container {containerName} does not exist.");
+        
+        var blobClient = containerClient.GetBlobClient(key);
+        var blobExists = await blobClient.ExistsAsync();
+        if (!blobExists.Value) return NotFound($"Blob {key} does not exist.");
+        
+        var response = await blobClient.DownloadStreamingAsync();
+        var properties = await blobClient.GetPropertiesAsync();
+        
+        return File(response.Value.Content, properties.Value.ContentType ?? "application/octet-stream");
     }
 
     [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteFileAsync(string bucketName, string key)
+    public async Task<IActionResult> DeleteFileAsync(string containerName, string key)
     {
-        var bucketExists = await _s3Client.DoesS3BucketExistAsync(bucketName);
-        if (!bucketExists) return NotFound($"Bucket {bucketName} does not exist");
-        await _s3Client.DeleteObjectAsync(bucketName, key);
+        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var exists = await containerClient.ExistsAsync();
+        if (!exists.Value) return NotFound($"Container {containerName} does not exist");
+        
+        var blobClient = containerClient.GetBlobClient(key);
+        await blobClient.DeleteIfExistsAsync();
         return NoContent();
     }
 }
