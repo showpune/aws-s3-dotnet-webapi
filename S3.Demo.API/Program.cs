@@ -10,12 +10,19 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-string endpoint = builder.Configuration.GetValue<string>("AzureStorageBlob:Endpoint");
+string? endpoint = builder.Configuration.GetValue<string>("AzureStorageBlob:Endpoint");
 
 // Create BlobServiceClient using credential and endpoint
-builder.Services.AddSingleton(new BlobServiceClient(
-    new Uri(endpoint),
-    new DefaultAzureCredential()));
+if (!string.IsNullOrEmpty(endpoint))
+{
+    builder.Services.AddSingleton(new BlobServiceClient(
+        new Uri(endpoint),
+        new DefaultAzureCredential()));
+}
+else
+{
+    throw new InvalidOperationException("AzureStorageBlob:Endpoint configuration is required");
+}
 
 var app = builder.Build();
 
